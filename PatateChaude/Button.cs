@@ -3,6 +3,7 @@ using HardelAPI.Utility;
 using HarmonyLib;
 using Hazel;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace PatateChaud {
@@ -17,14 +18,13 @@ namespace PatateChaud {
             button = new CooldownButton
                 (() => OnClick(),
                 HotPatatoes.HotPatatoesCooldwon.GetValue(),
-                Plugin.LoadSpriteFromEmbeddedResources("RolesMods.Resources.potato.png", 16f),
+                Plugin.LoadSpriteFromEmbeddedResources("PatateChaude.Resources.potato.png", 16f),
                 250,
                 new Vector2(0f, 0f),
                 __instance,
                 () => OnUpdate(button)
             );
         }
-
 
         private static void OnClick() {
             if (allPlayersTargetable == null)
@@ -42,7 +42,7 @@ namespace PatateChaud {
                         button.SetCanUse(!MeetingHud.Instance);
 
                     if (allPlayersTargetable != null) {
-                        PlayerControl target = PlayerControlUtils.GetClosestPlayer(PlayerControl.LocalPlayer, allPlayersTargetable);
+                        PlayerControl target = PlayerControlUtils.GetClosestPlayer(PlayerControl.LocalPlayer, allPlayersTargetable, 1f);
                         if (closestPlayer != null) {
                             button.isDisable = false;
                             closestPlayer.myRend.material.SetFloat("_Outline", 0f);
@@ -58,14 +58,34 @@ namespace PatateChaud {
                             closestPlayer = null;
                         }
                     }
+                } else {
+                    button.SetCanUse(false);
                 }
+
+                if (closestPlayer != null && !HotPatatoes.Instance.HasRole(PlayerControl.LocalPlayer)) {
+                    closestPlayer.myRend.material.SetFloat("_Outline", 0f);
+                    closestPlayer = null;
+                }
+            } else {
+                button.SetCanUse(false);
             }
         }
 
         private static void RpcSendPatatoes() {
-            MessageWriter messageWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte) CustomRPC.SendPatato, SendOption.Reliable, -1);
-            messageWriter.Write(closestPlayer.PlayerId);
-            AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
+            if (closestPlayer != null) {
+                Button.allPlayersTargetable = PlayerControl.AllPlayerControls.ToArray().ToList();
+                if (HotPatatoes.DontParent.GetValue())
+                    Button.allPlayersTargetable.RemovePlayer(closestPlayer);
+
+                HotPatatoes.Instance.AllPlayers = new List<PlayerControl>() { closestPlayer };
+                HotPatatoes.Instance.DefineVisibleByWhitelist();
+
+                MessageWriter messageWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte) CustomRPC.SendPatato, SendOption.Reliable, -1);
+                messageWriter.Write(closestPlayer.PlayerId);
+                messageWriter.Write(PlayerControl.LocalPlayer.PlayerId);
+                AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
+            }
+
         }
     }
 }
