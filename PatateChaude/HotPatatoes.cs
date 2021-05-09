@@ -43,14 +43,14 @@ namespace PatateChaud {
 
         public override void OnGameStarted() {
             PatateChaud.Button.button.MaxTimer = (int) HotPatatoesCooldwon.GetValue();
-            PatateChaud.Button.allPlayersTargetable = PlayerControl.AllPlayerControls.ToArray().ToList();
+            PatateChaud.Button.button.allPlayersTargetable = PlayerControl.AllPlayerControls.ToArray().ToList();
         }
 
         public override void OnPlayerDisconnect(PlayerControl Player) {
             if (HasRole(Player)) {
                 List<PlayerControl> users = PlayerControl.AllPlayerControls.ToArray().ToList().Where(p => !p.Data.IsDead && !p.Data.Disconnected).ToList();
                 PlayerControl newUsers = users[new System.Random().Next(users.Count)];
-                PatateChaud.Button.allPlayersTargetable = PlayerControl.AllPlayerControls.ToArray().ToList();
+                PatateChaud.Button.button.allPlayersTargetable = PlayerControl.AllPlayerControls.ToArray().ToList();
 
                 Instance.AllPlayers = new List<PlayerControl>() { newUsers };
                 Instance.DefineVisibleByWhitelist();
